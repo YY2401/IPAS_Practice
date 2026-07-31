@@ -1,4 +1,4 @@
-export type CertCode = 'ISE' | 'BK';
+export type CertCode = 'ISE' | 'MLE' | 'BDA' | 'AIE' | 'BK';
 
 export interface Question {
   id: string;
