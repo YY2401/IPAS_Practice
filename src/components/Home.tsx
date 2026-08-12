@@ -45,7 +45,9 @@ export default function Home() {
     () => db.cards.filter((c) => !c.lastCorrect).count(),
   );
 
-  // Build cert → subject → papers hierarchy
+  // Build cert → subject → papers hierarchy.
+  // One paper per year (both 梯次 combined) so a session matches the ~50-question
+  // length of a real iPAS paper.
   const certTree = useLiveQuery(async () => {
     const questions = await db.questions.toArray();
     const tree = new Map<
@@ -56,7 +58,7 @@ export default function Home() {
           string,
           {
             count: number;
-            papers: { year: number; session: number; count: number }[];
+            papers: { year: number; count: number }[];
           }
         >;
       }
@@ -75,20 +77,17 @@ export default function Home() {
       const subj = cert.subjects.get(q.subject)!;
       subj.count++;
 
-      const existing = subj.papers.find(
-        (p) => p.year === q.year && p.session === q.session,
-      );
+      const existing = subj.papers.find((p) => p.year === q.year);
       if (existing) {
         existing.count++;
       } else {
-        subj.papers.push({ year: q.year, session: q.session, count: 1 });
+        subj.papers.push({ year: q.year, count: 1 });
       }
     }
 
-    // Sort papers by year desc, session desc
     for (const cert of tree.values()) {
       for (const subj of cert.subjects.values()) {
-        subj.papers.sort((a, b) => b.year - a.year || b.session - a.session);
+        subj.papers.sort((a, b) => b.year - a.year);
       }
     }
 
@@ -206,16 +205,16 @@ export default function Home() {
                             <div className="ml-4 mt-1.5 space-y-1.5">
                               {data.papers.map((p) => (
                                 <button
-                                  key={`${p.year}-${p.session}`}
+                                  key={p.year}
                                   className="w-full text-left px-4 py-2.5 bg-white rounded-lg border border-gray-200 flex items-center active:bg-gray-50"
                                   onClick={() =>
                                     navigate(
-                                      `/quiz/exam?year=${p.year}&session=${p.session}&subject=${encodeURIComponent(subject)}`,
+                                      `/quiz/exam?year=${p.year}&subject=${encodeURIComponent(subject)}`,
                                     )
                                   }
                                 >
                                   <span className="flex-1 text-sm text-gray-700">
-                                    {p.year} 年第 {p.session} 梯
+                                    {p.year} 年
                                   </span>
                                   <span className="text-xs text-gray-400">{p.count} 題</span>
                                   <svg className="w-4 h-4 text-gray-300 ml-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

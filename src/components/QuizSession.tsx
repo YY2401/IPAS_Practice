@@ -39,15 +39,14 @@ export default function QuizSession() {
           break;
         }
         case 'exam': {
+          // A paper is one year of a subject — both 梯次 together, so the
+          // session length matches a real iPAS paper.
           const year = Number(searchParams.get('year'));
-          const session = Number(searchParams.get('session'));
           const subject = searchParams.get('subject') ?? '';
           qs = await db.questions
-            .filter(
-              (q) => q.year === year && q.session === session && q.subject === subject,
-            )
+            .filter((q) => q.year === year && q.subject === subject)
             .toArray();
-          qs.sort((a, b) => a.number - b.number);
+          qs.sort((a, b) => a.session - b.session || a.number - b.number);
           break;
         }
         case 'wrong': {
